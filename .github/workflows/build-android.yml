@@ -1,0 +1,56 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build web app
+      run: npm run build
+      
+    - name: Sync Capacitor
+      run: npx cap sync android
+      
+    - name: Setup Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+      
+    - name: Grant execute permission for gradlew
+      run: chmod +x android/gradlew
+      working-directory: .
+      
+    - name: Build APK
+      working-directory: ./android
+      run: ./gradlew assembleRelease
+      
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-release
+        path: android/app/build/outputs/apk/release/app-release.apk
+        retention-days: 30
+

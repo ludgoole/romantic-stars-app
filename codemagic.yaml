@@ -1,0 +1,38 @@
+workflows:
+  android-workflow:
+    name: Android Build
+    max_build_duration: 120
+    instance_type: mac_mini_m1
+    environment:
+      groups:
+        # 如果需要签名，取消下面的注释并配置密钥库
+        # - keystore_credentials
+      vars:
+        PACKAGE_NAME: "com.romanticstars.app"
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm ci
+      - name: Build web app
+        script: |
+          npm run build
+      - name: Sync Capacitor
+        script: |
+          npx cap sync android
+    artifacts:
+      - android/app/build/outputs/**/*.apk
+      - android/app/build/outputs/**/*.aab
+    publishing:
+      email:
+        recipients:
+          - user@example.com  # 替换为你的邮箱
+        notify:
+          success: true
+          failure: false
+    android:
+      build:
+        - name: Build APK
+          script: |
+            cd android
+            ./gradlew assembleRelease
+
